@@ -14,18 +14,26 @@
       font-family: 'Segoe UI', sans-serif;
       background-color: #f4f7f9;
       display: flex;
-      flex-direction: row;
+      flex-direction: column;
       align-items: center;
       padding: 20px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
       gap: 20px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1200px;
     }
 
     .chat {
       display: flex;
       flex-direction: column;
-      flex: 1;
-      max-width: 600px;
-      height: 80vh;
+      width: 100%;
+      max-width: 500px;
+      height: 500px;
       background-color: #fff;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -94,9 +102,12 @@
     .canvas-container {
       display: flex;
       flex-direction: column;
-      flex: 1;
       align-items: center;
       gap: 10px;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     #canvas {
@@ -105,7 +116,6 @@
       border: 2px solid #ccc;
       border-radius: 12px;
       background-color: white;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     #clearBtn {
@@ -134,17 +144,19 @@
   </style>
 </head>
 <body>
-  <div class="chat">
-    <ul class="messages"></ul>
-    <form class="form">
-      <input class="input" autocomplete="off" placeholder="メッセージを入力..." />
-      <button class="submit">送信</button>
-    </form>
-  </div>
+  <div class="container">
+    <div class="chat">
+      <ul class="messages"></ul>
+      <form class="form">
+        <input class="input" autocomplete="off" placeholder="メッセージを入力..." />
+        <button class="submit">送信</button>
+      </form>
+    </div>
 
-  <div class="canvas-container">
-    <canvas id="canvas" width="600" height="400"></canvas>
-    <button id="clearBtn">クリア</button>
+    <div class="canvas-container">
+      <canvas id="canvas" width="600" height="400"></canvas>
+      <button id="clearBtn">クリア</button>
+    </div>
   </div>
 
   <script>
@@ -213,7 +225,7 @@
           const { id, text } = msg
           const messageList = document.querySelector('.messages')
           const li = document.createElement('li')
-          li.textContent = id === myId ? `(${id})自分: ${text}` : `${id}: ${text}`
+          li.textContent = id === myId ? `自分 (オーナー): ${text}` : `${id}: ${text}`
           messageList.appendChild(li)
           messageList.scrollTop = messageList.scrollHeight
         }
@@ -223,14 +235,15 @@
       form.onsubmit = function (e) {
         e.preventDefault()
         const input = document.querySelector('.input')
-        const text = input.value
-        if (text.trim() === '') return
+        const text = input.value.trim()
+        if (text === '') return
+        // ✅ 表示処理を削除し、送信のみに
         ws.send(JSON.stringify({ id: myId, text, type: 'chat' }))
         input.value = ''
         input.focus()
       }
 
-      // クリアボタンの処理
+      // クリアボタン処理
       const clearBtn = document.getElementById('clearBtn')
       clearBtn.onclick = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
@@ -243,6 +256,5 @@
 
     main()
   </script>
-  <script src="client.js"></script>
 </body>
 </html>
