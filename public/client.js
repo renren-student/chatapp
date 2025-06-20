@@ -63,7 +63,7 @@ function main() {
 
     if (msg.type === 'chat') {
       const { name, text } = msg
-      const messageList = document.querySelector('.messages')
+    //   const messageList = document.querySelector('.messages')
       const li = document.createElement('li')
       li.textContent = name === myName ? `自分 (${name}): ${text}` : `${name}: ${text}`
       messageList.appendChild(li)
