@@ -8,7 +8,7 @@
       .chat {
         display: flex;
         flex-direction: column;
-        height: 100vh;
+        height: 80vh;
       }
       .messages {
         flex: 1;
@@ -41,6 +41,12 @@
         <button class="submit">Send</button>
       </form>
     </div>
+    <canvas
+      id="canvas"
+      width="600"
+      height="600"
+      style="border: solid 1px black"
+    ></canvas>
 
     <script>
       function main() {
@@ -48,34 +54,81 @@
         const ws = new WebSocket(host + '/ws')
         const myId = self.crypto.randomUUID().substr(0, 8)
 
-        const form = document.querySelector('.form')
+        const canvas = document.getElementById('canvas')
+        const ctx = canvas.getContext('2d')
+        let drawing = false
 
+        canvas.addEventListener('mousedown', (e) => {
+          drawing = true
+          ctx.beginPath()
+          ctx.moveTo(e.offsetX, e.offsetY)
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mousedown')
+        })
+
+        canvas.addEventListener('mousemove', (e) => {
+          if (drawing) {
+            draw(e.offsetX, e.offsetY, true)
+            sendDrawingEvent(e.offsetX, e.offsetY, 'mousemove')
+          }
+        })
+
+        canvas.addEventListener('mouseup', (e) => {
+          drawing = false
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseup')
+        })
+
+        canvas.addEventListener('mouseout', (e) => {
+          drawing = false
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseout')
+        })
+
+        function draw(x, y, dragging) {
+          if (dragging) {
+            ctx.lineTo(x, y)
+            ctx.stroke()
+          } else {
+            ctx.moveTo(x, y)
+          }
+        }
+
+        function sendDrawingEvent(x, y, control) {
+          const message = JSON.stringify({ x, y, control, type: 'paint' })
+          ws.send(message)
+        }
+
+        ws.onmessage = (event) => {
+          const msg = JSON.parse(event.data)
+          if (msg.type === 'paint') {
+            const { x, y, control } = msg
+            if (control === 'mousedown') {
+              ctx.beginPath()
+              ctx.moveTo(x, y)
+            } else if (control === 'mouseup') {
+              ctx.beginPath()
+            } else if (control === 'mousemove') {
+              draw(x, y, true)
+            } else if (control === 'mouseout') {
+              drawing = false
+            }
+          }
+
+          if (msg.type === 'chat') {
+            const { id, text } = msg
+            const messageList = document.querySelector('.messages')
+            const li = document.createElement('li')
+            li.textContent = id === myId ? `(${id})自分: ${text}` : `${id}: ${text}`
+            messageList.appendChild(li)
+          }
+        }
+
+        const form = document.querySelector('.form')
         form.onsubmit = function (e) {
           e.preventDefault()
           const input = document.querySelector('.input')
           const text = input.value
-          ws.send(JSON.stringify({ id: myId, text }))
+          ws.send(JSON.stringify({ id: myId, text, type: 'chat' }))
           input.value = ''
           input.focus()
-        }
-
-        ws.onmessage = function (msg) {
-          const messageList = document.querySelector('.messages')
-          const li = document.createElement('li')
-
-          try {
-            const { id, text } = JSON.parse(msg.data)
-            if (id === myId) {
-              li.textContent = `(${id})自分: ` + text
-            } else {
-              li.textContent = id + ': ' + text
-            }
-          } catch (e) {
-            // Fallback: 通常のテキストとして扱う
-            li.textContent = msg.data
-          }
-
-          messageList.appendChild(li)
         }
 
         ws.onerror = function (error) {
