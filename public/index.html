@@ -91,6 +91,13 @@
       background-color: #1e88e5;
     }
 
+    .canvas-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
     #canvas {
       width: 600px;
       height: 400px;
@@ -98,6 +105,21 @@
       border-radius: 12px;
       background-color: white;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    #clearBtn {
+      padding: 10px 20px;
+      background-color: #ef5350;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #clearBtn:hover {
+      background-color: #d32f2f;
     }
 
     ::-webkit-scrollbar {
@@ -119,7 +141,10 @@
     </form>
   </div>
 
-  <canvas id="canvas" width="600" height="400"></canvas>
+  <div class="canvas-container">
+    <canvas id="canvas" width="600" height="400"></canvas>
+    <button id="clearBtn">クリア</button>
+  </div>
 
   <script>
     function main() {
@@ -202,6 +227,12 @@
         ws.send(JSON.stringify({ id: myId, text, type: 'chat' }))
         input.value = ''
         input.focus()
+      }
+
+      // クリアボタンの処理
+      const clearBtn = document.getElementById('clearBtn')
+      clearBtn.onclick = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
       }
 
       ws.onerror = function (error) {
