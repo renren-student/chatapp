@@ -57,16 +57,6 @@
       word-wrap: break-word;
     }
 
-    .messages li:nth-child(odd) {
-      background-color: #e3f2fd;
-      align-self: flex-start;
-    }
-
-    .messages li:nth-child(even) {
-      background-color: #c8e6c9;
-      align-self: flex-end;
-    }
-
     .form {
       display: flex;
       border-top: 1px solid #ddd;
@@ -160,6 +150,25 @@
   </div>
 
   <script>
+    // 🔹 ユーザーごとの色を保持
+    const userColors = {}
+
+    function getUserColor(id) {
+      if (userColors[id]) return userColors[id]
+      const hue = Math.floor(Math.abs(hashCode(id)) % 360)
+      const color = `hsl(${hue}, 60%, 85%)`
+      userColors[id] = color
+      return color
+    }
+
+    function hashCode(str) {
+      let hash = 0
+      for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash)
+      }
+      return hash
+    }
+
     function main() {
       const host = location.origin.replace(/^http/, 'ws')
       const ws = new WebSocket(host + '/ws')
@@ -207,25 +216,6 @@
         ws.send(message)
       }
 
-      const userColor = {}
-
-      function getUserColor(id){
-        if(userColors[id]) return userColors[id]
-
-        const hue = Math.floor(Math.abs(hashCode(id)) % 360)
-        const color = 'hsl(${hue}, 60%, 80%)'
-        userColors[id] = color
-        return color
-      }
-
-      function hashCode(str){
-        let hash = 0;
-        for(let i = 0; i < str.length; i++){
-            hash = str.charCodeAt(i) + ((hash << 5) - hash)
-        }
-        return hash
-      }
-
       ws.onmessage = (event) => {
         const msg = JSON.parse(event.data)
         if (msg.type === 'paint') {
@@ -245,7 +235,7 @@
           const messageList = document.querySelector('.messages')
           const li = document.createElement('li')
           li.textContent = id === myId ? `自分 (オーナー): ${text}` : `${id}: ${text}`
-          li.style.backgroundColor = getUserColor(id)
+          li.style.backgroundColor = getUserColor(id) // 🎨 固定色を設定
           messageList.appendChild(li)
           messageList.scrollTop = messageList.scrollHeight
         }
@@ -257,13 +247,11 @@
         const input = document.querySelector('.input')
         const text = input.value.trim()
         if (text === '') return
-        // ✅ 表示処理を削除し、送信のみに
         ws.send(JSON.stringify({ id: myId, text, type: 'chat' }))
         input.value = ''
         input.focus()
       }
 
-      // クリアボタン処理
       const clearBtn = document.getElementById('clearBtn')
       clearBtn.onclick = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height)
